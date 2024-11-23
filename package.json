@@ -1,0 +1,20 @@
+{
+  "name": "x-path",
+  "version": "0.0.0",
+  "description": "coming soon...",
+  "main": "x-path.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "jazz-soft (https://jazz-soft.net/)",
+  "devDependencies": {
+    "fast-xml-parser": "^4.5.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/jazz-soft/x-path.git"
+  },
+  "homepage": "https://github.com/jazz-soft/x-path",
+  "bugs": "https://github.com/jazz-soft/x-path/issues",
+  "license": "MIT"
+}
