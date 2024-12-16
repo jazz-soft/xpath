@@ -2,14 +2,15 @@ const assert = require('assert');
 const parser = require('../parser');
 
 describe('tokenize', function() {
-  it(`'quoted with "''"'`, function() {
-    var tt = parser.tokenize(`'quoted with "''"'`);
-    //console.log(tt);
-    assert.equal(tt[0].v, `quoted with "'"`);
+  it('empty', function() {
+    assert.equal(parser.tokenize('').length, 0);
+    assert.equal(parser.tokenize(' \t\r\n ').length, 0);
   });
-  it(`"quoted with '""'"`, function() {
-    var tt = parser.tokenize(`"quoted with '""'"`);
-    //console.log(tt);
-    assert.equal(tt[0].v, `quoted with '"'`);
+  it('quoted', function() {
+    assert.equal(parser.tokenize(`'quoted with "''"'`)[0].v, `quoted with "'"`);
+    assert.equal(parser.tokenize(`"quoted with '""'"`)[0].v, `quoted with '"'`);
+  });
+  it('other', function() {
+    assert.equal(parser.tokenize('?')[0].t, '?');
   });
 });

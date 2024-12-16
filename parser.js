@@ -1,31 +1,34 @@
-function Tok(s) {
-  this.s = s;
-  this.tt = [];
-  this.p = 0;
-  while (this.p < s.length) this.tt.push(this.next());
+function tokenize(s) {
+  var tt = [];
+  var p, c, x;
+  for (p = 0; p < s.length; p++) {
+    c = s[p];
+    if (c == ' ' || c == '\t' || c == '\r' || c == '\n') continue;
+    else if (c == "'" || c == '"') {
+      x = get_quoted(s, p);
+      p += x.s.length;
+      tt.push(x);
+    }
+    else tt.push({ t: c, p: p, s: c });
+  }
+  return tt;
 }
-Tok.prototype.next = function() {
-  if (this.s[this.p] == "'" || this.s[this.p] == '"') return this.get_quoted();
-};
-Tok.prototype.get_quoted = function() {
-  const q = this.s[this.p];
-  var s = '';
-  var c;
-  for (var n = this.p + 1; n < this.s.length; n++) {
-    c = this.s[n];
+function get_quoted(s, p) {
+  const q = s[p];
+  var c, n, x, v = '';
+  for (n = p + 1; n < s.length; n++) {
+    c = s[n];
     if (c == q) {
       n++;
-      if (this.s[n] != q) {
-        var x = { t: '""', p: this.p, s: this.s.substring(this.p, n), v: s };
-        this.p = n;
+      if (s[n] != q) {
+        x = { t: '""', p: p, s: s.substring(p, n), v: v };
+        p = n;
         return x;
       }
     }
-    s += c;
+    v += c;
   }
 }
-
-function tokenize(s) { return new Tok(s).tt; }
 
 module.exports = {
   tokenize: tokenize
