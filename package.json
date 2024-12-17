@@ -1,8 +1,8 @@
 {
-  "name": "x-path",
+  "name": "xx-path",
   "version": "0.0.0",
   "description": "coming soon...",
-  "main": "x-path.js",
+  "main": "xx-path.js",
   "scripts": {
     "test": "nyc mocha",
     "coverage": "nyc report --reporter=lcov"
@@ -15,9 +15,9 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/jazz-soft/x-path.git"
+    "url": "https://github.com/jazz-soft/xx-path.git"
   },
-  "homepage": "https://github.com/jazz-soft/x-path",
-  "bugs": "https://github.com/jazz-soft/x-path/issues",
+  "homepage": "https://github.com/jazz-soft/xx-path",
+  "bugs": "https://github.com/jazz-soft/xx-path/issues",
   "license": "MIT"
 }
