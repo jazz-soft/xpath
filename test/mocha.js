@@ -10,6 +10,10 @@ describe('tokenize', function() {
     assert.equal(parser.tokenize(`'quoted with "''"'`)[0].v, `quoted with "'"`);
     assert.equal(parser.tokenize(`"quoted with '""'"`)[0].v, `quoted with '"'`);
   });
+  it('number', function() {
+    assert.equal(parser.tokenize('.55')[0].v, .55);
+    assert.equal(parser.tokenize('-55')[0].v, -55);
+  });
   it('other', function() {
     assert.equal(parser.tokenize('?')[0].t, '?');
   });
