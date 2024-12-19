@@ -28,18 +28,29 @@ function get_quoted(s, p) {
     }
     v += c;
   }
+  err('Unmatched quote', p);
 }
 function get_number(s, p) {
-  var t = 0;
-  var n = p + 1;
-  if (s[p] == '.' && isDigit(s[n])) { t = 1; n++; }
-  else if (s[p] == '-' && isDigit(s[n])) n++;
-  else if (!isDigit(s[p])) return;
+  var f = false;
+  var n = p;
+  if (s[n] == '.') { n++; f = true; }
+  if (!isDigit(s[n])) return;
   while (isDigit(s[n])) n++;
+  if (s[n] == '.' && !f) {
+    n++;
+    while (isDigit(s[n])) n++;
+  }
+  if (s[n] == 'e' || s[n] == 'E') {
+    n++;
+    if (s[n] == '+' || s[n] == '-') n++;
+    if (!isDigit(s[n])) err('Syntax error', p);
+    while (isDigit(s[n])) n++;
+  }
   s = s.substring(p, n);
   return { t: 'num', p: p, s: s, v: parseFloat(s) };
 }
 function isDigit(c) { return c >= '0' && c <= '9'; }
+function err(msg, p) { throw new Error(msg + ' in position ' + p); }
 
 module.exports = {
   tokenize: tokenize
