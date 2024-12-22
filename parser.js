@@ -4,14 +4,11 @@ function tokenize(s) {
   for (p = 0; p < s.length; p++) {
     c = s[p];
     if (c == ' ' || c == '\t' || c == '\r' || c == '\n') continue;
-    else if (c == "'" || c == '"') {
-      x = get_quoted(s, p);
+    x = get_quoted(s, p) || get_number(s, p) || get_quri(s, p);
+    if (x) {
       p += x.s.length;
       tt.push(x);
-    }
-    else if (x = get_number(s, p)) {
-      p += x.s.length;
-      tt.push(x);
+      continue;
     }
     else tt.push({ t: c, p: p, s: c });
   }
@@ -19,6 +16,7 @@ function tokenize(s) {
 }
 function get_quoted(s, p) {
   const q = s[p];
+  if (q != '"' && q != "'") return;
   var c, n, v = '';
   for (n = p + 1; n < s.length; n++) {
     c = s[n];
@@ -48,6 +46,11 @@ function get_number(s, p) {
   }
   s = s.substring(p, n);
   return { t: 'num', p: p, s: s, v: parseFloat(s) };
+}
+function get_quri(s, p) {
+  if (s[p] != 'Q' || s[p + 1] != '{') return;
+  for (var n = p + 2; n < s.length; n++) if (s[n] == '}') return { t: 'Q{}', p: p, s: s.substring(p, n + 1), v: s.substring(p + 2, n).trim() };
+  err('Unmatched brace', p + 1);
 }
 function isDigit(c) { return c >= '0' && c <= '9'; }
 function err(msg, p) { throw new Error(msg + ' in position ' + p); }

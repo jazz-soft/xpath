@@ -19,6 +19,11 @@ describe('tokenize', function() {
     assert.equal(parser.tokenize('1E-10')[0].v, 1E-10);
     assert.throws(function() { parser.tokenize('1e-'); });
   });
+  it('braced URI', function() {
+    assert.equal(parser.tokenize('Q{ }')[0].v, '');
+    assert.equal(parser.tokenize('Q{ http:// }')[0].v, 'http://');
+    assert.throws(function() { parser.tokenize('Q{ '); });
+  });
   it('other', function() {
     assert.equal(parser.tokenize('?')[0].t, '?');
   });
