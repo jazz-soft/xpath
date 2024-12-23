@@ -24,6 +24,11 @@ describe('tokenize', function() {
     assert.equal(parser.tokenize('Q{ http:// }')[0].v, 'http://');
     assert.throws(function() { parser.tokenize('Q{ '); });
   });
+  it('comment', function() {
+    assert.equal(parser.tokenize('(::)')[0].s, '(::)');
+    assert.equal(parser.tokenize('(:(:():):)')[0].s, '(:(:():):)');
+    assert.throws(function() { parser.tokenize('(:)'); });
+  });
   it('other', function() {
     assert.equal(parser.tokenize('?')[0].t, '?');
   });

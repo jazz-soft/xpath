@@ -4,7 +4,7 @@ function tokenize(s) {
   for (p = 0; p < s.length; p++) {
     c = s[p];
     if (c == ' ' || c == '\t' || c == '\r' || c == '\n') continue;
-    x = get_quoted(s, p) || get_number(s, p) || get_quri(s, p);
+    x = get_quoted(s, p) || get_number(s, p) || get_quri(s, p) || get_comment(s, p);
     if (x) {
       p += x.s.length;
       tt.push(x);
@@ -51,6 +51,18 @@ function get_quri(s, p) {
   if (s[p] != 'Q' || s[p + 1] != '{') return;
   for (var n = p + 2; n < s.length; n++) if (s[n] == '}') return { t: 'Q{}', p: p, s: s.substring(p, n + 1), v: s.substring(p + 2, n).trim() };
   err('Unmatched brace', p + 1);
+}
+function get_comment(s, p) {
+  if (s[p] != '(' || s[p + 1] != ':') return;
+  var k = 1;
+  for (var n = p + 2; n < s.length; n++) {
+    if (s[n] == '(' && s[n + 1] == ':') { n++; k++; }
+    else if (s[n] == ':' && s[n + 1] == ')') {
+      n++; k--;
+      if (!k) return { t: '(:', p: p, s: s.substring(p, n + 1) };
+    }
+  }
+  err('Incomplete comment', p);
 }
 function isDigit(c) { return c >= '0' && c <= '9'; }
 function err(msg, p) { throw new Error(msg + ' in position ' + p); }
