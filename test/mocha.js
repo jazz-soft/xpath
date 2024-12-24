@@ -29,6 +29,13 @@ describe('tokenize', function() {
     assert.equal(parser.tokenize('(:(:():):)')[0].s, '(:(:():):)');
     assert.throws(function() { parser.tokenize('(:)'); });
   });
+  it('name', function() {
+    assert.equal(parser.tokenize('AB_YZ')[0].v, 'AB_YZ');
+    assert.equal(parser.tokenize('ab8yz')[0].v, 'ab8yz');
+    assert.equal(parser.tokenize('español')[0].v, 'español');
+    assert.equal(parser.tokenize('中文')[0].v, '中文');
+    assert.equal(parser.tokenize('ខ្មែរ')[0].v, 'ខ្មែរ'); // as of 12/24, error in Chrome/Firefox, ok in Edge
+  });
   it('other', function() {
     assert.equal(parser.tokenize('?')[0].t, '?');
   });

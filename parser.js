@@ -4,7 +4,7 @@ function tokenize(s) {
   for (p = 0; p < s.length; p++) {
     c = s[p];
     if (c == ' ' || c == '\t' || c == '\r' || c == '\n') continue;
-    x = get_quoted(s, p) || get_number(s, p) || get_quri(s, p) || get_comment(s, p);
+    x = get_quoted(s, p) || get_number(s, p) || get_quri(s, p) || get_comment(s, p) || get_name(s, p);
     if (x) {
       p += x.s.length;
       tt.push(x);
@@ -64,8 +64,38 @@ function get_comment(s, p) {
   }
   err('Incomplete comment', p);
 }
+function get_name(s, p) {
+  if (!isNameStart(charcode(s[p]))) return;
+  for (var n = p + 1; n < s.length; n++) if (!isNameChar(charcode(s[n]))) break;
+  return { t: 'name', p: p, s: s.substring(p, n), v: s.substring(p, n) };
+}
+function charcode(c) { return c ? c.charCodeAt(0) : -1; }
+function isLetter(c) { return c >= 65 && c <= 90 || c >= 97 && c <= 122 || c == 95; }
 function isDigit(c) { return c >= '0' && c <= '9'; }
+function isNameStart(c) { // https://www.w3.org/TR/REC-xml/#NT-Name
+  return isLetter(c) || c >= 0xC0 && c <= 0xD6 || c >= 0xD8 && c <= 0xF6 || c >= 0xF8 && c <= 0x2FF || c >= 0x370 && c <= 0x37D ||
+    c >= 0x37F && c <= 0x1FFF || c >= 0x200C && c <= 0x200D || c >= 0x2070 && c <= 0x218F || c >= 0x2C00 && c <= 0x2FEF ||
+    c >= 0x3001 && c <= 0xD7FF || c >= 0xF900 && c <= 0xFDCF || c >= 0xFDF0 && c <= 0xFFFD || c >= 0x10000 && c <= 0xEFFFF;
+}
+function isNameChar(c) { // https://www.w3.org/TR/REC-xml/#NT-Name
+  return isNameStart(c) || c == 45 || c == 46 || c >= 48 && c <= 57 || c == 0xb7 || c >= 0x300 && c <= 0x36F || c >= 0x203F && c <= 0x2040;
+}
 function err(msg, p) { throw new Error(msg + ' in position ' + p); }
+const axes = {
+  'child': {},
+  'descendant': {},
+  'attribute': {},
+  'self': {},
+  'descendant-or-self': {},
+  'following-sibling': {},
+  'following': {},
+  'namespace': {},
+  'parent': {},
+  'ancestor': { rev: true },
+  'preceding-sibling': { rev: true },
+  'preceding': { rev: true },
+  'ancestor-or-self': { rev: true }
+};
 
 module.exports = {
   tokenize: tokenize
