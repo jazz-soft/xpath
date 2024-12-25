@@ -1,14 +1,47 @@
 function tokenize(s) {
   var tt = [];
-  var p, c, x;
+  var p, c, x, k;
   for (p = 0; p < s.length; p++) {
     c = s[p];
     if (c == ' ' || c == '\t' || c == '\r' || c == '\n') continue;
-    x = get_quoted(s, p) || get_number(s, p) || get_quri(s, p) || get_comment(s, p) || get_name(s, p);
+    x = get_quoted(s, p) || get_number(s, p) || get_comment(s, p);
     if (x) {
       p += x.s.length;
       tt.push(x);
       continue;
+    }
+    else if (isNameStart(charcode(s[p]))) {
+      k = 0;
+      while (k < 3) {
+        if (k < 2) {
+          x = get_quri(s, p);
+          if (x) {
+            tt.push(x);
+            p += x.s.length;
+            k = 2; // next is name
+            continue;
+          }
+        }
+        x = get_name(s, p);
+        if (!x) err('Missing name', p);
+        tt.push(x);
+        p += x.s.length;
+        if (k == 0 && s[p] == ':' && s[p + 1] == ':') {
+          x.t = 'axis';
+          x.s += '::';
+          p += 2;
+          k = 1;
+          continue;
+        }
+        if (k < 2 && s[p] == ':') {
+          x.t = 'pref';
+          x.s += ':';
+          p += 1;
+          k = 2;
+          continue;
+        }
+        break;
+      }
     }
     else tt.push({ t: c, p: p, s: c });
   }
