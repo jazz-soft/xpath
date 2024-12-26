@@ -10,7 +10,7 @@ function tokenize(s) {
       tt.push(x);
       continue;
     }
-    else if (isNameStart(charcode(s[p]))) {
+    else if (s[p] == '*' || isNameStart(charcode(s[p]))) {
       k = 0;
       while (k < 3) {
         if (k < 2) {
@@ -18,7 +18,7 @@ function tokenize(s) {
           if (x) {
             tt.push(x);
             p += x.s.length;
-            k = 2; // next is name
+            k = 2;
             continue;
           }
         }
@@ -27,6 +27,7 @@ function tokenize(s) {
         tt.push(x);
         p += x.s.length;
         if (k == 0 && s[p] == ':' && s[p + 1] == ':') {
+          if (!axes[x.v]) err('Unknown axis', p - x.v.length);
           x.t = 'axis';
           x.s += '::';
           p += 2;
@@ -98,6 +99,7 @@ function get_comment(s, p) {
   err('Incomplete comment', p);
 }
 function get_name(s, p) {
+  if (s[p] == '*') return { t: 'name', p: p, s: '*', v: '*' };
   if (!isNameStart(charcode(s[p]))) return;
   for (var n = p + 1; n < s.length; n++) if (!isNameChar(charcode(s[n]))) break;
   return { t: 'name', p: p, s: s.substring(p, n), v: s.substring(p, n) };
