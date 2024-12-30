@@ -76,6 +76,13 @@ describe('tokenize', function() {
     assert.equal(x[0].t, 'name');
   });
   it('other', function() {
+    assert.equal(parser.tokenize('//')[0].t, '//');
     assert.equal(parser.tokenize('?')[0].t, '?');
+  });
+});
+
+describe('parse', function() {
+  it('empty', function() {
+    parser.parse('');
   });
 });

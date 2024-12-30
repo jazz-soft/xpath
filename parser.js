@@ -1,3 +1,7 @@
+function parse(s) {
+  tt = tokenize(s);
+}
+
 function tokenize(s) {
   var tt = [];
   var p, c, x, k;
@@ -37,14 +41,21 @@ function tokenize(s) {
         if (k < 2 && s[p] == ':') {
           x.t = 'pref';
           x.s += ':';
-          p += 1;
+          p++;
           k = 2;
           continue;
         }
         break;
       }
     }
-    else tt.push({ t: c, p: p, s: c });
+    else {
+      k = s.substring(p, p + 2);
+      if (ops[k]) {
+        tt.push({ t: k, p: p, s: k });
+        p++;
+      }
+      tt.push({ t: c, p: p, s: c });
+    }
   }
   return tt;
 }
@@ -116,6 +127,8 @@ function isNameChar(c) { // https://www.w3.org/TR/REC-xml/#NT-Name
   return isNameStart(c) || c == 45 || c == 46 || c >= 48 && c <= 57 || c == 0xb7 || c >= 0x300 && c <= 0x36F || c >= 0x203F && c <= 0x2040;
 }
 function err(msg, p) { throw new Error(msg + ' in position ' + p); }
+const ops = {};
+for (var k of ['//', '||', '<<', '>>', '<=', '>=', '!=']) ops[k] = true;
 const axes = {
   'child': {},
   'descendant': {},
@@ -133,5 +146,6 @@ const axes = {
 };
 
 module.exports = {
+  parse: parse,
   tokenize: tokenize
 };
