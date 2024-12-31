@@ -3,8 +3,8 @@ const parser = require('../parser');
 
 describe('tokenize', function() {
   it('empty', function() {
-    assert.equal(parser.tokenize('').length, 0);
-    assert.equal(parser.tokenize(' \t\r\n ').length, 0);
+    assert.equal(parser.tokenize('').length, 1);
+    assert.equal(parser.tokenize(' \t\r\n ').length, 1);
   });
   it('quoted', function() {
     assert.equal(parser.tokenize(`'quoted with "''"'`)[0].v, `quoted with "'"`);
@@ -102,6 +102,16 @@ describe('tokenize', function() {
 
 describe('parse', function() {
   it('empty', function() {
-    parser.parse('');
+    assert.equal(parser.parse('').length, 0);
+  });
+  it('EQName', function() {
+    assert.equal(parser.parse('x').length, 1);
+    assert.equal(parser.parse('x:y').length, 1);
+    assert.equal(parser.parse('Q{x}y').length, 1);
+  });
+  it('Expr', function() {
+    assert.equal(parser.parse('a, b:c').length, 2);
+    assert.throws(function() { parser.parse('a,'); });
+    assert.throws(function() { parser.parse('a b'); });
   });
 });

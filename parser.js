@@ -1,5 +1,37 @@
 function parse(s) {
-  tt = tokenize(s);
+  var tt = tokenize(s);
+  var a = _Expr(tt, 0);
+  if (tt[a[0]].t != 'end') unexpected(tt[a[0]]);
+  return a[1];
+}
+function _Expr(tt, p) { // [6]
+  var a = [];
+  var x = _ExprSingle(tt, p);
+  if (!x) return [0, a];
+  var n = x[0];
+  a.push(x[1]);
+  while (tt[p + n].t == ',') {
+    n++;
+    x = _ExprSingle(tt, p + n);
+    if (!x) unexpected(tt[p + n]);
+    n += x[0];
+    a.push(x[1]);
+  }
+  return [n, a];
+}
+function _ExprSingle(tt, p) { // [7]
+  return _EQName(tt, p);
+}
+function _EQName(tt, p) { // [112]
+  if (tt[p].t == 'pref' && tt[p + 1].t == 'name') {
+    return [2, { type: 'EQName' }];
+  }
+  else if (tt[p].t == 'Q{}' && tt[p + 1].t == 'name') {
+    return [2, { type: 'EQName' }];
+  }
+  else if (tt[p].t == 'name') {
+    return [1, { type: 'EQName' }];
+  }
 }
 
 function tokenize(s) {
@@ -59,6 +91,7 @@ function tokenize(s) {
         }
         break;
       }
+      p--;
     }
     else {
       k = s.substring(p, p + 2);
@@ -69,6 +102,7 @@ function tokenize(s) {
       tt.push({ t: c, p: p, s: c });
     }
   }
+  tt.push({ t: 'end', p: p });
   return tt;
 }
 function get_quoted(s, p) {
@@ -138,7 +172,8 @@ function isNameStart(c) { // https://www.w3.org/TR/REC-xml/#NT-Name
 function isNameChar(c) { // https://www.w3.org/TR/REC-xml/#NT-Name
   return isNameStart(c) || c == 45 || c == 46 || c >= 48 && c <= 57 || c == 0xb7 || c >= 0x300 && c <= 0x36F || c >= 0x203F && c <= 0x2040;
 }
-function err(msg, p) { throw new Error(msg + ' in position ' + p); }
+function unexpected(t) { err(t.t == 'end' ? 'Unexpected end of input' : 'Unexpected token: ' + t.s, t.p); }
+function err(msg, p) { throw new Error(msg + ' at position ' + p); }
 const ops = {};
 for (var k of ['//', '..', '||', '<<', '>>', '<=', '>=', '!=']) ops[k] = true;
 const axes = {
