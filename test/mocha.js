@@ -62,6 +62,25 @@ describe('tokenize', function() {
     assert.equal(x[2].t, 'name');
     assert.throws(function() { parser.tokenize('child::'); });
     assert.throws(function() { parser.tokenize('*::'); });
+    x = parser.tokenize('@attr');
+    assert.equal(x[0].t, 'axis');
+    assert.equal(x[1].t, 'name');
+    x = parser.tokenize('@ns:attr');
+    assert.equal(x[0].t, 'axis');
+    assert.equal(x[1].t, 'pref');
+    assert.equal(x[2].t, 'name');
+    assert.throws(function() { parser.tokenize('@:attr'); });
+  });
+  it('var', function() {
+    var x = parser.tokenize('$x');
+    assert.equal(x[0].t, '$');
+    assert.equal(x[1].t, 'name');
+    x = parser.tokenize('$ns:x');
+    assert.equal(x[0].t, '$');
+    assert.equal(x[1].t, 'pref');
+    assert.equal(x[2].t, 'name');
+    assert.throws(function() { parser.tokenize('$*'); });
+    assert.throws(function() { parser.tokenize('$ns:*'); });
   });
   it('wildcard', function() {
     var x = parser.tokenize('child::x:*');

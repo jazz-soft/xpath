@@ -14,8 +14,19 @@ function tokenize(s) {
       tt.push(x);
       continue;
     }
-    else if (s[p] == '*' || isNameStart(charcode(s[p]))) {
+    else if (s[p] == '*' || s[p] == '@' || s[p] == '$' || isNameStart(charcode(s[p]))) {
       k = 0;
+      if (s[p] == '$') {
+        tt.push({ t: '$', p: p, s: '$' });
+        p++;
+        k = 1;
+        c = '$';
+      }
+      else if (s[p] == '@') {
+        tt.push({ t: 'axis', p: p, s: '@', v: 'attribute' });
+        p++;
+        k = 1;
+      }
       while (k < 3) {
         if (k < 2) {
           x = get_quri(s, p);
@@ -28,6 +39,7 @@ function tokenize(s) {
         }
         x = get_name(s, p);
         if (!x) err('Missing name', p);
+        if (x.s == '*' && c == '$') err('Unexpected character', p);
         tt.push(x);
         p += x.s.length;
         if (k == 0 && s[p] == ':' && s[p + 1] == ':') {
@@ -128,7 +140,7 @@ function isNameChar(c) { // https://www.w3.org/TR/REC-xml/#NT-Name
 }
 function err(msg, p) { throw new Error(msg + ' in position ' + p); }
 const ops = {};
-for (var k of ['//', '||', '<<', '>>', '<=', '>=', '!=']) ops[k] = true;
+for (var k of ['//', '..', '||', '<<', '>>', '<=', '>=', '!=']) ops[k] = true;
 const axes = {
   'child': {},
   'descendant': {},
