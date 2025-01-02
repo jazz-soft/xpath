@@ -102,12 +102,34 @@ describe('tokenize', function() {
 
 describe('parse', function() {
   it('empty', function() {
-    assert.equal(parser.parse('').length, 0);
+    assert.throws(function() { parser.parse(''); });
   });
   it('EQName', function() {
     assert.equal(parser.parse('x').length, 1);
     assert.equal(parser.parse('x:y').length, 1);
     assert.equal(parser.parse('Q{x}y').length, 1);
+  });
+  it('PathExpr', function() {
+    var x = parser.parse('/')[0];
+    assert.equal(x.type, 'PathExpr');
+    assert.equal(x.a.length, 1);
+    x = parser.parse('/a')[0];
+    assert.equal(x.type, 'PathExpr');
+    assert.equal(x.a.length, 2);
+    x = parser.parse('/a/b')[0];
+    assert.equal(x.type, 'PathExpr');
+    assert.equal(x.a.length, 4);
+    x = parser.parse('//a')[0];
+    assert.equal(x.type, 'PathExpr');
+    assert.equal(x.a.length, 2);
+    x = parser.parse('//a/b//c')[0];
+    assert.equal(x.type, 'PathExpr');
+    assert.equal(x.a.length, 6);
+    x = parser.parse('a/b')[0];
+    assert.equal(x.type, 'PathExpr');
+    assert.equal(x.a.length, 3);
+    assert.throws(function() { parser.parse('//'); });
+    assert.throws(function() { parser.parse('/a/'); });
   });
   it('Expr', function() {
     assert.equal(parser.parse('a, b:c').length, 2);

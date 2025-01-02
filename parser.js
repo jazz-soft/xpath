@@ -4,22 +4,49 @@ function parse(s) {
   if (tt[a[0]].t != 'end') unexpected(tt[a[0]]);
   return a[1];
 }
+function _req(f, tt, p) { return f(tt, p) || unexpected(tt[p]); }
 function _Expr(tt, p) { // [6]
-  var a = [];
-  var x = _ExprSingle(tt, p);
-  if (!x) return [0, a];
-  var n = x[0];
+  var a = [], n = 0, x;
+  x = _req(_ExprSingle, tt, p + n);
+  n += x[0];
   a.push(x[1]);
   while (tt[p + n].t == ',') {
     n++;
-    x = _ExprSingle(tt, p + n);
-    if (!x) unexpected(tt[p + n]);
+    x = _req(_ExprSingle, tt, p + n);
     n += x[0];
     a.push(x[1]);
   }
   return [n, a];
 }
 function _ExprSingle(tt, p) { // [7]
+  return _PathExpr(tt, p);
+}
+function _PathExpr(tt, p) { // [36]
+  var a = [], n = 0, x;
+  if (tt[p].t == '/') {
+    a.push({ type: '/' });
+    n++;
+    x = _StepExpr(tt, p + n);
+    if (!x) return [n, { type: 'PathExpr', a: a }];
+  }
+  else if (tt[p].t == '//') {
+    a.push({ type: '//' });
+    n++;
+  }
+  while (true) {
+    x = _req(_StepExpr, tt, p + n);
+    n += x[0];
+    a.push(x[1]);
+    x = tt[p + n];
+    if (x.t == '/' || x.t == '//') {
+      a.push({ type: x.t });
+      n++;
+    }
+    else break;
+  }
+  return [n, { type: 'PathExpr', a: a }];
+}
+function _StepExpr(tt, p) { // [37]
   return _EQName(tt, p);
 }
 function _EQName(tt, p) { // [112]
@@ -99,7 +126,7 @@ function tokenize(s) {
         tt.push({ t: k, p: p, s: k });
         p++;
       }
-      tt.push({ t: c, p: p, s: c });
+      else tt.push({ t: c, p: p, s: c });
     }
   }
   tt.push({ t: 'end', p: p });
