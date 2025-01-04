@@ -86,13 +86,13 @@ describe('tokenize', function() {
     var x = parser.tokenize('child::x:*');
     assert.equal(x[0].t, 'axis');
     assert.equal(x[1].t, 'pref');
-    assert.equal(x[2].t, 'name');
+    assert.equal(x[2].t, '*');
     x = parser.tokenize('child::*:x');
     assert.equal(x[0].t, 'axis');
-    assert.equal(x[1].t, 'pref');
+    assert.equal(x[1].t, '*:');
     assert.equal(x[2].t, 'name');
     x = parser.tokenize('*');
-    assert.equal(x[0].t, 'name');
+    assert.equal(x[0].t, '*');
   });
   it('other', function() {
     assert.equal(parser.tokenize('//')[0].t, '//');

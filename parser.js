@@ -98,7 +98,7 @@ function tokenize(s) {
         }
         x = get_name(s, p);
         if (!x) err('Missing name', p);
-        if (x.s == '*' && c == '$') err('Unexpected character', p);
+        if (x.s == '*' && c == '$') unexpected(x);
         tt.push(x);
         p += x.s.length;
         if (k == 0 && s[p] == ':' && s[p + 1] == ':') {
@@ -110,7 +110,7 @@ function tokenize(s) {
           continue;
         }
         if (k < 2 && s[p] == ':') {
-          x.t = 'pref';
+          x.t = x.t == '*' ? '*:' : 'pref';
           x.s += ':';
           p++;
           k = 2;
@@ -183,7 +183,7 @@ function get_comment(s, p) {
   err('Incomplete comment', p);
 }
 function get_name(s, p) {
-  if (s[p] == '*') return { t: 'name', p: p, s: '*', v: '*' };
+  if (s[p] == '*') return { t: '*', p: p, s: '*' };
   if (!isNameStart(charcode(s[p]))) return;
   for (var n = p + 1; n < s.length; n++) if (!isNameChar(charcode(s[n]))) break;
   return { t: 'name', p: p, s: s.substring(p, n), v: s.substring(p, n) };
