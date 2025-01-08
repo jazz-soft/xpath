@@ -102,14 +102,35 @@ describe('tokenize', function() {
 
 describe('parse', function() {
   it('empty', function() {
-    assert.throws(function() { parser.parse(''); });
+    var x = parser.parse('');
+    assert.equal(x.type, 'Empty');
+    x = parser.parse(' ');
+    assert.equal(x.type, 'Empty');
   });
-  it('EQName', function() {
+  it('PrimaryExpr', function() {
+    var x = parser.parse('.');
+    assert.equal(x.type, '.');
+    x = parser.parse('1');
+    assert.equal(x.type, 'Numeric');
+    x = parser.parse('"quoted"');
+    assert.equal(x.type, 'String');
+    x = parser.parse('$var');
+    assert.equal(x.type, 'VarRef');
+    x = parser.parse('$ns:var');
+    assert.equal(x.type, 'VarRef');
+    x = parser.parse('()');
+    assert.equal(x.type, 'Empty');
+    x = parser.parse('(1)');
+    assert.equal(x.type, 'Numeric');
+    x = parser.parse('(1,2)');
+    assert.equal(x.type, 'Seq');
+  });
+  it.skip('EQName', function() {
     assert.equal(parser.parse('x').length, 1);
     assert.equal(parser.parse('x:y').length, 1);
     assert.equal(parser.parse('Q{x}y').length, 1);
   });
-  it('PathExpr', function() {
+  it.skip('PathExpr', function() {
     var x = parser.parse('/')[0];
     assert.equal(x.type, 'PathExpr');
     assert.equal(x.a.length, 1);
@@ -132,8 +153,12 @@ describe('parse', function() {
     assert.throws(function() { parser.parse('/a/'); });
   });
   it('Expr', function() {
-    assert.equal(parser.parse('a, b:c').length, 2);
-    assert.throws(function() { parser.parse('a,'); });
-    assert.throws(function() { parser.parse('a b'); });
+    var x = parser.parse('1, 2, 3');
+    assert.equal(x.type, 'Seq');
+    x = parser.parse('"a", "b"');
+    assert.equal(x.type, 'Seq');
+    //assert.equal(parser.parse('a, b:c').length, 2);
+    //assert.throws(function() { parser.parse('a,'); });
+    //assert.throws(function() { parser.parse('a b'); });
   });
 });

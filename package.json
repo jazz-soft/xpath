@@ -2,6 +2,10 @@
   "name": "xx-path",
   "version": "0.0.0",
   "description": "coming soon...",
+  "keywords": [
+    "xpath",
+    "xml"
+  ],
   "main": "xx-path.js",
   "scripts": {
     "test": "nyc mocha",
@@ -9,7 +13,6 @@
   },
   "author": "jazz-soft (https://jazz-soft.net/)",
   "devDependencies": {
-    "fast-xml-parser": "^4.5.1",
     "mocha": "^11.0.1",
     "nyc": "^17.1.0"
   },

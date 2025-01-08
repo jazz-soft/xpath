@@ -5,9 +5,11 @@ function parse(s) {
   return a[1];
 }
 function _req(f, tt, p) { return f(tt, p) || unexpected(tt[p]); }
+function _expect(t, x) { if (x.t != t) unexpected(x); }
 function _Expr(tt, p) { // [6]
   var a = [], n = 0, x;
-  x = _req(_ExprSingle, tt, p + n);
+  x = _ExprSingle(tt, p + n);
+  if (!x) return [0, { type: 'Empty' }];
   n += x[0];
   a.push(x[1]);
   while (tt[p + n].t == ',') {
@@ -16,10 +18,12 @@ function _Expr(tt, p) { // [6]
     n += x[0];
     a.push(x[1]);
   }
-  return [n, a];
+  if (a.length == 1) return [n, a[0]];
+  return [n, { type: 'Seq', a: a }];
 }
 function _ExprSingle(tt, p) { // [7]
-  return _PathExpr(tt, p);
+  //return _PathExpr(tt, p);
+  return _PrimaryExpr(tt, p);
 }
 function _PathExpr(tt, p) { // [36]
   var a = [], n = 0, x;
@@ -49,6 +53,28 @@ function _PathExpr(tt, p) { // [36]
 function _StepExpr(tt, p) { // [37]
   return _EQName(tt, p);
 }
+function _PrimaryExpr(tt, p) { // [56]
+  var x;
+  if (tt[p].t == '.') return [1, { type: '.' }];
+  if (tt[p].t == 'num') return [1, { type: 'Numeric', v: tt[p].v }];
+  if (tt[p].t == '""') return [1, { type: 'String', v: tt[p].v }];
+  if (tt[p].t == '$') {
+    p++;
+    x = _req(_EQName, tt, p);
+    p += x[0];
+    x[1].type = 'VarRef';
+    x[0]++;
+    return x;
+  }
+  if (tt[p].t == '(') {
+    p++;
+    x = _Expr(tt, p);
+    p += x[0];
+    _expect(')', tt[p]);
+    return [x[0] + 2, x[1]];
+  }
+}
+
 function _EQName(tt, p) { // [112]
   if (tt[p].t == 'pref' && tt[p + 1].t == 'name') {
     return [2, { type: 'EQName' }];
@@ -69,7 +95,7 @@ function tokenize(s) {
     if (c == ' ' || c == '\t' || c == '\r' || c == '\n') continue;
     x = get_quoted(s, p) || get_number(s, p) || get_comment(s, p);
     if (x) {
-      p += x.s.length;
+      p += x.s.length - 1;
       tt.push(x);
       continue;
     }
