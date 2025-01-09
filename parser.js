@@ -8,7 +8,7 @@ function _req(f, tt, p) { return f(tt, p) || unexpected(tt[p]); }
 function _expect(t, x) { if (x.t != t) unexpected(x); }
 function _Expr(tt, p) { // [6]
   var a = [], n = 0, x;
-  x = _ExprSingle(tt, p + n);
+  x = _ExprSingle(tt, p);
   if (!x) return [0, { type: 'Empty' }];
   n += x[0];
   a.push(x[1]);
@@ -53,11 +53,22 @@ function _PathExpr(tt, p) { // [36]
 function _StepExpr(tt, p) { // [37]
   return _EQName(tt, p);
 }
+function _Predicate(tt, p) { // [51]
+  if (tt[p].t != '[') return;
+  p++;
+  var x = _req(_Expr, tt, p);
+  if (!x[0]) unexpected(tt[p]);
+  p += x[0];
+  _expect(']', tt[p]);
+  return [x[0] + 2, x[1]];
+}
 function _PrimaryExpr(tt, p) { // [56]
   var x;
   if (tt[p].t == '.') return [1, { type: '.' }];
   if (tt[p].t == 'num') return [1, { type: 'Numeric', v: tt[p].v }];
   if (tt[p].t == '""') return [1, { type: 'String', v: tt[p].v }];
+  x = _Parenthesized(tt, p);
+  if (x) return x;
   if (tt[p].t == '$') {
     p++;
     x = _req(_EQName, tt, p);
@@ -66,13 +77,18 @@ function _PrimaryExpr(tt, p) { // [56]
     x[0]++;
     return x;
   }
-  if (tt[p].t == '(') {
-    p++;
-    x = _Expr(tt, p);
-    p += x[0];
-    _expect(')', tt[p]);
-    return [x[0] + 2, x[1]];
-  }
+}
+function _Parenthesized(tt, p) { // [61]
+  if (tt[p].t != '(') return;
+  p++;
+  var x = _Expr(tt, p);
+  p += x[0];
+  _expect(')', tt[p]);
+  return [x[0] + 2, x[1]];
+}
+function _Argument(tt, p) { // [64]
+  if (tt[p].t == '?') return [1, { type: '?' }];
+  return _ExprSingle(tt, p);
 }
 
 function _EQName(tt, p) { // [112]
