@@ -124,6 +124,27 @@ describe('parse', function() {
     assert.equal(x.type, 'Numeric');
     x = parser.parse('(1,2)');
     assert.equal(x.type, 'Seq');
+    x = parser.parse('call()');
+    assert.equal(x.type, 'FunctionCall');
+    assert.equal(x.a[1].type, 'ArgumentList');
+    assert.equal(x.a[1].a.length, 0);
+    x = parser.parse('call(1)');
+    assert.equal(x.type, 'FunctionCall');
+    assert.equal(x.a[1].type, 'ArgumentList');
+    assert.equal(x.a[1].a.length, 1);
+    x = parser.parse('call(?, 1)');
+    assert.equal(x.type, 'FunctionCall');
+    assert.equal(x.a[1].type, 'ArgumentList');
+    assert.equal(x.a[1].a.length, 2);
+    assert.throws(function() { parser.parse('call('); });
+    assert.throws(function() { parser.parse('call(*)'); });
+    assert.throws(function() { parser.parse('call(1 2)'); });
+  });
+  it('PostfixExpr', function() {
+    var x = parser.parse('$x[1]');
+    x = parser.parse('x()(?)');
+    assert.throws(function() { parser.parse('$x[]'); });
+    //console.log(x);
   });
   it.skip('EQName', function() {
     assert.equal(parser.parse('x').length, 1);

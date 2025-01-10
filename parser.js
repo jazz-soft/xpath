@@ -22,8 +22,8 @@ function _Expr(tt, p) { // [6]
   return [n, { type: 'Seq', a: a }];
 }
 function _ExprSingle(tt, p) { // [7]
-  //return _PathExpr(tt, p);
-  return _PrimaryExpr(tt, p);
+//console.log(tt, p);
+  return _PostfixExpr(tt, p);
 }
 function _PathExpr(tt, p) { // [36]
   var a = [], n = 0, x;
@@ -53,6 +53,35 @@ function _PathExpr(tt, p) { // [36]
 function _StepExpr(tt, p) { // [37]
   return _EQName(tt, p);
 }
+function _PostfixExpr(tt, p) { // [49]
+  var a = [], n = 0, x;
+  x = _PrimaryExpr(tt, p);
+  if (!x) return;
+  n += x[0];
+  a.push(x[1]);
+  while (true) {
+    x = _Predicate(tt, p + n);
+    if (!x) x = _ArgumentList(tt, p + n);
+    if (!x) break;
+    n += x[0];
+    a.push(x[1]);
+  }
+  if (a.length == 1) return [n, a[0]];
+  return [n, { type: 'PostfixExpr', a: a }];
+}
+function _ArgumentList(tt, p) { // [50]
+  if (tt[p].t != '(') return;
+  if (tt[p + 1].t == ')') return [2, { type: 'ArgumentList', a: [] }];
+  var a = [], n = 1, x;
+  while (true) {
+    x = _req(_Argument, tt, p + n);
+    n += x[0];
+    a.push(x[1]);
+    if (tt[p + n].t == ')') return [n + 1, { type: 'ArgumentList', a: a }];
+    _expect(',', tt[p + n]);
+    n++;
+  }
+}
 function _Predicate(tt, p) { // [51]
   if (tt[p].t != '[') return;
   p++;
@@ -60,10 +89,10 @@ function _Predicate(tt, p) { // [51]
   if (!x[0]) unexpected(tt[p]);
   p += x[0];
   _expect(']', tt[p]);
-  return [x[0] + 2, x[1]];
+  return [x[0] + 2, { type: 'Predicate', a: x[1] }];
 }
 function _PrimaryExpr(tt, p) { // [56]
-  var x;
+  var x, y;
   if (tt[p].t == '.') return [1, { type: '.' }];
   if (tt[p].t == 'num') return [1, { type: 'Numeric', v: tt[p].v }];
   if (tt[p].t == '""') return [1, { type: 'String', v: tt[p].v }];
@@ -76,6 +105,11 @@ function _PrimaryExpr(tt, p) { // [56]
     x[1].type = 'VarRef';
     x[0]++;
     return x;
+  }
+  x = _EQName(tt, p);
+  if (x) {
+    y = _ArgumentList(tt, p + x[0]);
+    if (y) return [x[0] + y[0], { type: 'FunctionCall', a: [x[1], y[1]] }];
   }
 }
 function _Parenthesized(tt, p) { // [61]
