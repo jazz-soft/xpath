@@ -23,7 +23,7 @@ function _Expr(tt, p) { // [6]
 }
 function _ExprSingle(tt, p) { // [7]
 //console.log(tt, p);
-  return _PostfixExpr(tt, p);
+  return _PathExpr(tt, p);
 }
 function _PathExpr(tt, p) { // [36]
   var a = [], n = 0, x;
@@ -37,6 +37,7 @@ function _PathExpr(tt, p) { // [36]
     a.push({ type: '//' });
     n++;
   }
+  else if (!_StepExpr(tt, p)) return;
   while (true) {
     x = _req(_StepExpr, tt, p + n);
     n += x[0];
@@ -48,10 +49,13 @@ function _PathExpr(tt, p) { // [36]
     }
     else break;
   }
-  return [n, { type: 'PathExpr', a: a }];
+  return [n, a.length == 1 ? a[0] : { type: 'PathExpr', a: a }];
 }
-function _StepExpr(tt, p) { // [37]
-  return _EQName(tt, p);
+function _StepExpr(tt, p) { // [38]
+  return _PostfixExpr(tt, p) || _AxisStep(tt, p);
+}
+function _AxisStep(tt, p) { // [39]
+//  return _PostfixExpr(tt, p) || _AxisStep(tt, p);
 }
 function _PostfixExpr(tt, p) { // [49]
   var a = [], n = 0, x;
