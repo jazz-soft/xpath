@@ -137,7 +137,6 @@ describe('parse', function() {
     assert.equal(x.a[1].type, 'ArgumentList');
     assert.equal(x.a[1].a.length, 2);
     assert.throws(function() { parser.parse('call('); });
-    assert.throws(function() { parser.parse('call(*)'); });
     assert.throws(function() { parser.parse('call(1 2)'); });
   });
   it('PostfixExpr', function() {
@@ -146,40 +145,51 @@ describe('parse', function() {
     assert.throws(function() { parser.parse('$x[]'); });
     //console.log(x);
   });
-  it.skip('EQName', function() {
-    assert.equal(parser.parse('x').length, 1);
-    assert.equal(parser.parse('x:y').length, 1);
-    assert.equal(parser.parse('Q{x}y').length, 1);
+  it('EQName', function() {
+    var x = parser.parse('x');
+    assert.equal(x.type, 'AxisStep');
+    assert.equal(x.a[0].type, 'Axis');
+    assert.equal(x.a[1].type, 'NameTest');
+    x = parser.parse('x:y');
+    assert.equal(x.type, 'AxisStep');
+    assert.equal(x.a[0].type, 'Axis');
+    assert.equal(x.a[1].type, 'NameTest');
+    x = parser.parse('Q{x}y');
+    assert.equal(x.type, 'AxisStep');
+    assert.equal(x.a[0].type, 'Axis');
+    assert.equal(x.a[1].type, 'NameTest');
   });
-  it.skip('PathExpr', function() {
-    var x = parser.parse('/')[0];
+  it('PathExpr', function() {
+    var x = parser.parse('/');
     assert.equal(x.type, 'PathExpr');
     assert.equal(x.a.length, 1);
-    x = parser.parse('/a')[0];
+    x = parser.parse('/a');
     assert.equal(x.type, 'PathExpr');
     assert.equal(x.a.length, 2);
-    x = parser.parse('/a/b')[0];
+    x = parser.parse('/a/b');
     assert.equal(x.type, 'PathExpr');
     assert.equal(x.a.length, 4);
-    x = parser.parse('//a')[0];
+    x = parser.parse('//a');
     assert.equal(x.type, 'PathExpr');
     assert.equal(x.a.length, 2);
-    x = parser.parse('//a/b//c')[0];
+    x = parser.parse('//a/b//c');
     assert.equal(x.type, 'PathExpr');
     assert.equal(x.a.length, 6);
-    x = parser.parse('a/b')[0];
+    x = parser.parse('a/b');
     assert.equal(x.type, 'PathExpr');
     assert.equal(x.a.length, 3);
+    x = parser.parse('/node()/../preceding::*/*:x/x:*/Q{}*/@att');
+    //console.log(x);
     assert.throws(function() { parser.parse('//'); });
     assert.throws(function() { parser.parse('/a/'); });
+    assert.throws(function() { parser.parse('/*:*'); });
   });
   it('Expr', function() {
     var x = parser.parse('1, 2, 3');
     assert.equal(x.type, 'Seq');
     x = parser.parse('"a", "b"');
     assert.equal(x.type, 'Seq');
-    //assert.equal(parser.parse('a, b:c').length, 2);
-    //assert.throws(function() { parser.parse('a,'); });
-    //assert.throws(function() { parser.parse('a b'); });
+    assert.throws(function() { parser.parse('a,'); });
+    assert.throws(function() { parser.parse('a b'); });
   });
 });

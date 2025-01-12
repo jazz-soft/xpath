@@ -55,7 +55,46 @@ function _StepExpr(tt, p) { // [38]
   return _PostfixExpr(tt, p) || _AxisStep(tt, p);
 }
 function _AxisStep(tt, p) { // [39]
-//  return _PostfixExpr(tt, p) || _AxisStep(tt, p);
+  return _Step(tt, p);
+}
+function _Step(tt, p) { // [40-45]
+  var a = [], n = 0, x = tt[p];
+  if (x.t == '..') {
+    a.push({ typpe: '..' }, undefined);
+    return [1, { type: 'AxisStep', a: a }];
+  }
+  if (x.t == 'axis') {
+    a.push({ type: 'Axis', v: x.v });
+    n++;
+  }
+  else {
+    if (!_NodeTest(tt, p)) return;
+    a.push({ type: 'Axis', v: 'child' });
+  }
+  x = _req(_NodeTest, tt, p + n);
+  n += x[0];
+  a.push(x[1]);
+  return [n, { type: 'AxisStep', a: a }];
+}
+function _NodeTest(tt, p) { // [46]
+  if (tt[p].t == 'pref') {
+    if (tt[p + 1].t == 'name') return [2, { type: 'NameTest', v: [tt[p + 1].v, tt[p].v] }];
+    else if (tt[p + 1].t == '*') return [2, { type: 'NameTest', v: ['*', tt[p].v] }];
+    //unexpected(tt[p + 1]); // throws in tokenizer
+  }
+  if (tt[p].t == '*:') {
+    if (tt[p + 1].t == 'name') return [2, { type: 'NameTest', v: [tt[p + 1].v, '*' ] }];
+    unexpected(tt[p + 1]);
+  }
+  else if (tt[p].t == 'Q{}') {
+    if (tt[p + 1].t == 'name') return [2, { type: 'NameTest', v: [ tt[p + 1].v, undefined, tt[p].v] }];
+    else if (tt[p + 1].t == '*') return [2, { type: 'NameTest', v: ['*', undefined, tt[p].v] }];
+    //unexpected(tt[p + 1]); // throws in tokenizer
+  }
+  else if (tt[p].t == '*') return [1, { type: 'NameTest', v: ['*'] }];
+  else if (tt[p].t == 'name') {
+    return [1, { type: 'NameTest', v: [tt[p].v] }];
+  }
 }
 function _PostfixExpr(tt, p) { // [49]
   var a = [], n = 0, x;
@@ -131,13 +170,13 @@ function _Argument(tt, p) { // [64]
 
 function _EQName(tt, p) { // [112]
   if (tt[p].t == 'pref' && tt[p + 1].t == 'name') {
-    return [2, { type: 'EQName' }];
+    return [2, { type: 'EQName', v: [tt[p + 1].v, tt[p].v] }];
   }
   else if (tt[p].t == 'Q{}' && tt[p + 1].t == 'name') {
-    return [2, { type: 'EQName' }];
+    return [2, { type: 'EQName', v: [tt[p + 1].v, undefined, tt[p].v] }];
   }
   else if (tt[p].t == 'name') {
-    return [1, { type: 'EQName' }];
+    return [1, { type: 'EQName', v: [tt[p].v] }];
   }
 }
 
