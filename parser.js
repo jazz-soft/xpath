@@ -23,7 +23,32 @@ function _Expr(tt, p) { // [6]
 }
 function _ExprSingle(tt, p) { // [7]
 //console.log(tt, p);
-  return _PathExpr(tt, p);
+  return _UnaryExpr(tt, p);
+}
+function _UnaryExpr(tt, p) { // [30]
+  var n = 0, m = false;
+  while (true) {
+    if (tt[p + n].t == '-') m = !m;
+    else if (tt[p + n].t != '+') break;
+    n++;
+  }
+  p += n;
+  var x = _ValueExpr(tt, p);
+  if (!x) {
+    if (!n) return;
+    unexpected(tt[p]);
+  }
+  return [x[0] + n, m ? { type: 'Unary-', v: x[1] } : x[1]];
+}
+function _ValueExpr(tt, p) { // [31, 35]
+  var x = _PathExpr(tt, p);
+  if (x) {
+    p += x[0];
+    if (tt[p].t != '!') return x;
+    p++;
+    var y = _req(_PathExpr, tt, p);
+    return [x[0] + y[0] + 1, { type: 'SimpleMapExpr', a: [x[1], y[1]] }];
+  }
 }
 function _PathExpr(tt, p) { // [36]
   var a = [], n = 0, x;
@@ -55,7 +80,17 @@ function _StepExpr(tt, p) { // [38]
   return _PostfixExpr(tt, p) || _AxisStep(tt, p);
 }
 function _AxisStep(tt, p) { // [39]
-  return _Step(tt, p);
+  var x = _Step(tt, p);
+  if (!x) return;
+  p += x[0];
+  if (x) while (true) {
+    var y = _Predicate(tt, p);
+    if (!y) break;
+    p += y[0];
+    x[0] += y[0];
+    x[1].a.push(y[1]);
+  }
+  return x;
 }
 function _Step(tt, p) { // [40-45]
   var a = [], n = 0, x = tt[p];

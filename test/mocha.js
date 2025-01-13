@@ -178,7 +178,7 @@ describe('parse', function() {
     x = parser.parse('a/b');
     assert.equal(x.type, 'PathExpr');
     assert.equal(x.a.length, 3);
-    x = parser.parse('/node()/../preceding::*/*:x/x:*/Q{}*/@att');
+    x = parser.parse('/node()[1]/../preceding::*[1]/*:x/x:*/Q{}*/@att');
     //console.log(x);
     assert.throws(function() { parser.parse('//'); });
     assert.throws(function() { parser.parse('/a/'); });
@@ -191,5 +191,16 @@ describe('parse', function() {
     assert.equal(x.type, 'Seq');
     assert.throws(function() { parser.parse('a,'); });
     assert.throws(function() { parser.parse('a b'); });
+  });
+  it('Operators', function() {
+    var x = parser.parse('a!b');
+    assert.equal(x.type, 'SimpleMapExpr');
+    x = parser.parse('-+-+-1');
+    assert.equal(x.type, 'Unary-');
+    x = parser.parse('--1');
+    assert.equal(x.type, 'Numeric');
+    //console.log('X:', x);
+    assert.throws(function() { parser.parse('a!'); });
+    assert.throws(function() { parser.parse('+'); });
   });
 });
