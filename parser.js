@@ -23,7 +23,56 @@ function _Expr(tt, p) { // [6]
 }
 function _ExprSingle(tt, p) { // [7]
 //console.log(tt, p);
-  return _UnaryExpr(tt, p);
+  return _CastableExpr(tt, p);
+}
+function _CastableExpr(tt, p) { // [27]
+  var a = [], n = 0;
+  var x = _CastExpr(tt, p);
+  if (!x) return;
+  n += x[0];
+  if (_Kword(tt, p + n, 'castable') && _Kword(tt, p + n + 1, 'as')) {
+    n += 2;
+    a.push(x[1]);
+    x = _req(_SingleType, tt, p + n);
+    n += x[0];
+    a.push(x[1]);
+    return [n, { type: 'CastableExpr', a: a }];
+  }
+  return x;
+}
+function _CastExpr(tt, p) { // [28]
+  var a = [], n = 0;
+  var x = _ArrowExpr(tt, p);
+  if (!x) return;
+  n += x[0];
+  if (_Kword(tt, p + n, 'cast') && _Kword(tt, p + n + 1, 'as')) {
+    n += 2;
+    a.push(x[1]);
+    x = _req(_SingleType, tt, p + n);
+    n += x[0];
+    a.push(x[1]);
+    return [n, { type: 'CastExpr', a: a }];
+  }
+  return x;
+}
+function _ArrowExpr(tt, p) { // [29]
+  var a = [], n = 0;
+  var x = _UnaryExpr(tt, p);
+  if (!x) return;
+  n += x[0];
+  if (tt[p + n].t != '=>') return x;
+  a.push(x[1]);
+  while (tt[p + n].t == '=>') {
+    n++;
+    x = _EQName(tt, p + n) || _ValueExpr(tt, p + n) || _Parenthesized(tt, p + n);
+    if (!x) unexpected(tt[p + n]);
+    n += x[0];
+    a.push(x[1]);
+    x = _req(_ArgumentList, tt, p + n);
+    n += x[0];
+    a.push(x[1]);
+  }
+  return [n, { type: 'ArrowExpr', a: a }];
 }
 function _UnaryExpr(tt, p) { // [30]
   var n = 0, m = false;
@@ -202,17 +251,30 @@ function _Argument(tt, p) { // [64]
   if (tt[p].t == '?') return [1, { type: '?' }];
   return _ExprSingle(tt, p);
 }
-
+function _SingleType(tt, p) { // [77]
+  var x = _EQName(tt, p);
+  if (!x) return;
+  p += x[0];
+  if (tt[p].t == '?') {
+    x[0]++;
+    x[1].type = 'SingleType?';
+  }
+  return x;
+}
 function _EQName(tt, p) { // [112]
   if (tt[p].t == 'pref' && tt[p + 1].t == 'name') {
-    return [2, { type: 'EQName', v: [tt[p + 1].v, tt[p].v] }];
+    return [2, { type: 'EQName', a: [tt[p + 1].v, tt[p].v] }];
   }
   else if (tt[p].t == 'Q{}' && tt[p + 1].t == 'name') {
-    return [2, { type: 'EQName', v: [tt[p + 1].v, undefined, tt[p].v] }];
+    return [2, { type: 'EQName', a: [tt[p + 1].v, undefined, tt[p].v] }];
   }
   else if (tt[p].t == 'name') {
-    return [1, { type: 'EQName', v: [tt[p].v] }];
+    return [1, { type: 'EQName', a: [tt[p].v] }];
   }
+}
+function _Kword(tt, p, kw) {
+  var x = _EQName(tt, p);
+  if (x && x[1].a[0] == kw && !x[1].a[1] && !x[1].a[2]) return [x[0], { type: kw }];
 }
 
 function tokenize(s) {
@@ -356,7 +418,7 @@ function isNameChar(c) { // https://www.w3.org/TR/REC-xml/#NT-Name
 function unexpected(t) { err(t.t == 'end' ? 'Unexpected end of input' : 'Unexpected token: ' + t.s, t.p); }
 function err(msg, p) { throw new Error(msg + ' at position ' + p); }
 const ops = {};
-for (var k of ['//', '..', '||', '<<', '>>', '<=', '>=', '!=']) ops[k] = true;
+for (var k of ['//', '..', '||', '<<', '>>', '<=', '>=', '!=', '=>']) ops[k] = true;
 const axes = {
   'child': {},
   'descendant': {},
