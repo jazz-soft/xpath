@@ -23,7 +23,95 @@ function _Expr(tt, p) { // [6]
 }
 function _ExprSingle(tt, p) { // [7]
 //console.log(tt, p);
-  return _CastableExpr(tt, p);
+  return _RangeExpr(tt, p);
+}
+function _RangeExpr(tt, p) { // [20]
+  var a = [], n = 0;
+  var x = _AdditiveExpr(tt, p);
+  if (!x) return;
+  n += x[0];
+  if (!_Kword(tt, p + n, 'to')) return x;
+  a.push(x[1]);
+  n++;
+  x = _req(_AdditiveExpr, tt, p + n);
+  n += x[0];
+  a.push(x[1]);
+  return [n, { type: 'RangeExpr', a: a }];
+}
+function _AdditiveExpr(tt, p) { // [21]
+  var a = [], n = 0;
+  var x = _MultiplicativeExpr(tt, p);
+  if (!x) return;
+  n += x[0];
+  if (tt[p + n].t != '+' && tt[p + n].t != '+') return x;
+  a.push(x[1]);
+  while (tt[p + n].t == '+' || tt[p + n].t == '-') {
+    a.push({ type: tt[p + n].t });
+    n++;
+    x = _req(_MultiplicativeExpr, tt, p + n);
+    n += x[0];
+    a.push(x[1]);
+  }
+  return [n, { type: 'AdditiveExpr', a: a }];
+}
+function _MultiplicativeExpr(tt, p) { // [22]
+  var a = [], n = 0;
+  var x = _UnionExpr(tt, p);
+  if (!x) return;
+  n += x[0];
+  if (tt[p + n].t != '*' && !_Kword(tt, p + n, 'div') && !_Kword(tt, p + n, 'idiv') && !_Kword(tt, p + n, 'mod')) return x;
+  a.push(x[1]);
+  while (true) {
+    if (tt[p + n].t == '*') a.push({ type: '*' });
+    else if (_Kword(tt, p + n, 'div'))  a.push({ type: 'div' });
+    else if (_Kword(tt, p + n, 'idiv'))  a.push({ type: 'idiv' });
+    else if (_Kword(tt, p + n, 'mod'))  a.push({ type: 'mod' });
+    else break;
+    n++;
+    x = _req(_UnionExpr, tt, p + n);
+    n += x[0];
+    a.push(x[1]);
+  }
+  return [n, { type: 'MultiplicativeExpr', a: a }];
+}
+function _UnionExpr(tt, p) { // [23]
+  var a = [], n = 0;
+  var x = _IntersectExceptExpr(tt, p);
+  if (!x) return;
+  n += x[0];
+  if (tt[p + n].t != '|' && !_Kword(tt, p + n, 'union')) return x;
+  a.push(x[1]);
+  while (tt[p + n].t == '|' || _Kword(tt, p + n, 'union')) {
+    n++;
+    x = _req(_IntersectExceptExpr, tt, p + n);
+    n += x[0];
+    a.push(x[1]);
+  }
+  return [n, { type: 'UnionExpr', a: a }];
+}
+function _IntersectExceptExpr(tt, p) { // [24]
+  var a = [], n = 0;
+  var x = _InstanceofExpr(tt, p);
+  if (!x) return;
+  n += x[0];
+  if (!_Kword(tt, p + n, 'intersect') && !_Kword(tt, p + n, 'except')) return x;
+  a.push(x[1]);
+  while (true) {
+    if (_Kword(tt, p + n, 'intersect')) a.push({ type: 'intersect' });
+    else if (_Kword(tt, p + n, 'except'))  a.push({ type: 'except' });
+    else break;
+    n++;
+    x = _req(_InstanceofExpr, tt, p + n);
+    n += x[0];
+    a.push(x[1]);
+  }
+  return [n, { type: 'IntersectExceptExpr', a: a }];
+}
+function _InstanceofExpr(tt, p) { // [25]
+  return _TreatExpr(tt, p); //
+}
+function _TreatExpr(tt, p) { // [26]
+  return _CastableExpr(tt, p); //
 }
 function _CastableExpr(tt, p) { // [27]
   var a = [], n = 0;

@@ -192,27 +192,67 @@ describe('parse', function() {
     assert.throws(function() { parser.parse('a,'); });
     assert.throws(function() { parser.parse('a b'); });
   });
-  it('Operators', function() {
+  it('SimpleMapExpr', function() {
     var x = parser.parse('a!b');
     assert.equal(x.type, 'SimpleMapExpr');
-    x = parser.parse('-+-+-1');
+    assert.throws(function() { parser.parse('a!'); });
+  });
+  it('Unary-', function() {
+    var x = parser.parse('-+-+-1');
     assert.equal(x.type, 'Unary-');
     x = parser.parse('--1');
     assert.equal(x.type, 'Numeric');
-    x = parser.parse('a => b()');
+    assert.throws(function() { parser.parse('+'); });
+  });
+  it('ArrowExpr', function() {
+    var x = parser.parse('a => b()');
     assert.equal(x.type, 'ArrowExpr');
-    x = parser.parse('a cast as b');
+    assert.throws(function() { parser.parse('a=>'); });
+    assert.throws(function() { parser.parse('a=>b'); });
+  });
+  it('CastExpr', function() {
+    var x = parser.parse('a cast as b');
     assert.equal(x.type, 'CastExpr');
     x = parser.parse('a cast as b?');
     assert.equal(x.type, 'CastExpr');
-    x = parser.parse('a castable as b');
-    assert.equal(x.type, 'CastableExpr');
-    //console.log('X:', x);
-    assert.throws(function() { parser.parse('a!'); });
-    assert.throws(function() { parser.parse('+'); });
-    assert.throws(function() { parser.parse('a=>'); });
-    assert.throws(function() { parser.parse('a=>b'); });
     assert.throws(function() { parser.parse('a cast as'); });
+  });
+  it('CastableExpr', function() {
+    var x = parser.parse('a castable as b');
+    assert.equal(x.type, 'CastableExpr');
     assert.throws(function() { parser.parse('a castable as'); });
+  });
+  it('IntersectExceptExpr', function() {
+    var x = parser.parse('a intersect b except c');
+    assert.equal(x.type, 'IntersectExceptExpr');
+    assert.throws(function() { parser.parse('a intersect'); });
+    assert.throws(function() { parser.parse('a except'); });
+  });
+  it('UnionExpr', function() {
+    var x = parser.parse('a | b');
+    assert.equal(x.type, 'UnionExpr');
+    x = parser.parse('a union b');
+    assert.equal(x.type, 'UnionExpr');
+    assert.throws(function() { parser.parse('a|'); });
+    assert.throws(function() { parser.parse('a union'); });
+  });
+  it('MultiplicativeExpr', function() {
+    var x = parser.parse('a * b');
+    assert.equal(x.type, 'MultiplicativeExpr');
+    x = parser.parse('a div b mod c');
+    assert.equal(x.type, 'MultiplicativeExpr');
+    assert.throws(function() { parser.parse('a*'); });
+    assert.throws(function() { parser.parse('a idiv'); });
+  });
+  it('AdditiveExpr', function() {
+    var x = parser.parse('a + b - c');
+    assert.equal(x.type, 'AdditiveExpr');
+    assert.throws(function() { parser.parse('a+'); });
+    assert.throws(function() { parser.parse('a -'); });
+  });
+  it('RangeExpr', function() {
+    var x = parser.parse('1 to 10');
+    assert.equal(x.type, 'RangeExpr');
+    assert.throws(function() { parser.parse('1 to'); });
   });
 });
