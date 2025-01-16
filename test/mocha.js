@@ -255,4 +255,53 @@ describe('parse', function() {
     assert.equal(x.type, 'RangeExpr');
     assert.throws(function() { parser.parse('1 to'); });
   });
+  it('StringConcatExpr', function() {
+    var x = parser.parse('a || b||c');
+    assert.equal(x.type, 'StringConcatExpr');
+    assert.throws(function() { parser.parse('a||'); });
+  });
+  it('ComparisonExpr', function() {
+    var x = parser.parse('a = b');
+    assert.equal(x.type, 'ComparisonExpr');
+    x = parser.parse('a != b');
+    assert.equal(x.type, 'ComparisonExpr');
+    x = parser.parse('a < b');
+    assert.equal(x.type, 'ComparisonExpr');
+    x = parser.parse('a > b');
+    assert.equal(x.type, 'ComparisonExpr');
+    x = parser.parse('a <= b');
+    assert.equal(x.type, 'ComparisonExpr');
+    x = parser.parse('a >= b');
+    assert.equal(x.type, 'ComparisonExpr');
+    x = parser.parse('a << b');
+    assert.equal(x.type, 'ComparisonExpr');
+    x = parser.parse('a >> b');
+    assert.equal(x.type, 'ComparisonExpr');
+    x = parser.parse('a eq b');
+    assert.equal(x.type, 'ComparisonExpr');
+    x = parser.parse('a ne b');
+    assert.equal(x.type, 'ComparisonExpr');
+    x = parser.parse('a lt b');
+    assert.equal(x.type, 'ComparisonExpr');
+    x = parser.parse('a gt b');
+    assert.equal(x.type, 'ComparisonExpr');
+    x = parser.parse('a le b');
+    assert.equal(x.type, 'ComparisonExpr');
+    x = parser.parse('a ge b');
+    assert.equal(x.type, 'ComparisonExpr');
+    x = parser.parse('a is b');
+    assert.equal(x.type, 'ComparisonExpr');
+    assert.throws(function() { parser.parse('a!='); });
+    assert.throws(function() { parser.parse('a eq'); });
+  });
+  it('AndExpr', function() {
+    var x = parser.parse('a and b and c');
+    assert.equal(x.type, 'AndExpr');
+    assert.throws(function() { parser.parse('a and'); });
+  });
+  it('OrExpr', function() {
+    var x = parser.parse('a or b or c');
+    assert.equal(x.type, 'OrExpr');
+    assert.throws(function() { parser.parse('a or'); });
+  });
 });

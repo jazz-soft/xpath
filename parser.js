@@ -12,7 +12,7 @@ function _Expr(tt, p) { // [6]
   if (!x) return [0, { type: 'Empty' }];
   n += x[0];
   a.push(x[1]);
-  while (tt[p + n].t == ',') {
+  while (tt[p + n].s == ',') {
     n++;
     x = _req(_ExprSingle, tt, p + n);
     n += x[0];
@@ -23,14 +23,77 @@ function _Expr(tt, p) { // [6]
 }
 function _ExprSingle(tt, p) { // [7]
 //console.log(tt, p);
-  return _RangeExpr(tt, p);
+  return _OrExpr(tt, p);
+}
+function _OrExpr(tt, p) { // [16]
+  var a = [], n = 0;
+  var x = _AndExpr(tt, p);
+  if (!x) return;
+  n += x[0];
+  if (tt[p + n].s != 'or') return x;
+  a.push(x[1]);
+  while (tt[p + n].s == 'or') {
+    n++;
+    x = _req(_AndExpr, tt, p + n);
+    n += x[0];
+    a.push(x[1]);
+  }
+  return [n, { type: 'OrExpr', a: a }];
+}
+function _AndExpr(tt, p) { // [17]
+  var a = [], n = 0;
+  var x = _ComparisonExpr(tt, p);
+  if (!x) return;
+  n += x[0];
+  if (tt[p + n].s != 'and') return x;
+  a.push(x[1]);
+  while (tt[p + n].s == 'and') {
+    n++;
+    x = _req(_ComparisonExpr, tt, p + n);
+    n += x[0];
+    a.push(x[1]);
+  }
+  return [n, { type: 'AndExpr', a: a }];
+}
+function _ComparisonExpr(tt, p) { // [18]
+  var a = [], n = 0;
+  var x = _StringConcatExpr(tt, p);
+  if (!x) return;
+  n += x[0];
+  if (tt[p + n].s == '=' || tt[p + n].s == '!=' || tt[p + n].s == '<' || tt[p + n].s == '>' || tt[p + n].s == '<=' || tt[p + n].s == '>=' || tt[p + n].s == '<<' || tt[p + n].s == '>>' ||
+      tt[p + n].s == 'eq' || tt[p + n].s == 'ne' || tt[p + n].s == 'lt' || tt[p + n].s == 'gt' || tt[p + n].s == 'le' || tt[p + n].s == 'ge' || tt[p + n].s == 'is'
+  ) {
+    a.push(x[1]);
+    a.push({ type: tt[p + n].s });
+    n++;
+    x = _req(_StringConcatExpr, tt, p + n);
+    n += x[0];
+    a.push(x[1]);
+    return [n, { type: 'ComparisonExpr', a: a }];
+  }
+  else return x;
+}
+function _StringConcatExpr(tt, p) { // [19]
+  var a = [], n = 0;
+  var x = _RangeExpr(tt, p);
+  if (!x) return;
+  n += x[0];
+  if (tt[p + n].s != '||') return x;
+  a.push(x[1]);
+  while (tt[p + n].s == '||') {
+    n++;
+    x = _req(_RangeExpr, tt, p + n);
+    n += x[0];
+    a.push(x[1]);
+  }
+  return [n, { type: 'StringConcatExpr', a: a }];
 }
 function _RangeExpr(tt, p) { // [20]
   var a = [], n = 0;
   var x = _AdditiveExpr(tt, p);
   if (!x) return;
   n += x[0];
-  if (!_Kword(tt, p + n, 'to')) return x;
+  if (tt[p + n].s != 'to') return x;
   a.push(x[1]);
   n++;
   x = _req(_AdditiveExpr, tt, p + n);
@@ -43,10 +106,10 @@ function _AdditiveExpr(tt, p) { // [21]
   var x = _MultiplicativeExpr(tt, p);
   if (!x) return;
   n += x[0];
-  if (tt[p + n].t != '+' && tt[p + n].t != '+') return x;
+  if (tt[p + n].s != '+' && tt[p + n].s != '+') return x;
   a.push(x[1]);
-  while (tt[p + n].t == '+' || tt[p + n].t == '-') {
-    a.push({ type: tt[p + n].t });
+  while (tt[p + n].s == '+' || tt[p + n].s == '-') {
+    a.push({ type: tt[p + n].s });
     n++;
     x = _req(_MultiplicativeExpr, tt, p + n);
     n += x[0];
@@ -59,14 +122,11 @@ function _MultiplicativeExpr(tt, p) { // [22]
   var x = _UnionExpr(tt, p);
   if (!x) return;
   n += x[0];
-  if (tt[p + n].t != '*' && !_Kword(tt, p + n, 'div') && !_Kword(tt, p + n, 'idiv') && !_Kword(tt, p + n, 'mod')) return x;
+  if (tt[p + n].s != '*' && tt[p + n].s != 'div' && tt[p + n].s != 'idiv' && tt[p + n].s != 'mod') return x;
   a.push(x[1]);
   while (true) {
-    if (tt[p + n].t == '*') a.push({ type: '*' });
-    else if (_Kword(tt, p + n, 'div'))  a.push({ type: 'div' });
-    else if (_Kword(tt, p + n, 'idiv'))  a.push({ type: 'idiv' });
-    else if (_Kword(tt, p + n, 'mod'))  a.push({ type: 'mod' });
-    else break;
+    if (tt[p + n].s != '*' && tt[p + n].s != 'div' && tt[p + n].s != 'idiv' && tt[p + n].s != 'mod') break;
+    a.push({ type: tt[p + n].s });
     n++;
     x = _req(_UnionExpr, tt, p + n);
     n += x[0];
@@ -79,9 +139,9 @@ function _UnionExpr(tt, p) { // [23]
   var x = _IntersectExceptExpr(tt, p);
   if (!x) return;
   n += x[0];
-  if (tt[p + n].t != '|' && !_Kword(tt, p + n, 'union')) return x;
+  if (tt[p + n].s != '|' && tt[p + n].s != 'union') return x;
   a.push(x[1]);
-  while (tt[p + n].t == '|' || _Kword(tt, p + n, 'union')) {
+  while (tt[p + n].s == '|' || tt[p + n].s == 'union') {
     n++;
     x = _req(_IntersectExceptExpr, tt, p + n);
     n += x[0];
@@ -94,12 +154,11 @@ function _IntersectExceptExpr(tt, p) { // [24]
   var x = _InstanceofExpr(tt, p);
   if (!x) return;
   n += x[0];
-  if (!_Kword(tt, p + n, 'intersect') && !_Kword(tt, p + n, 'except')) return x;
+  if (tt[p + n].s != 'intersect' && tt[p + n].s != 'except') return x;
   a.push(x[1]);
   while (true) {
-    if (_Kword(tt, p + n, 'intersect')) a.push({ type: 'intersect' });
-    else if (_Kword(tt, p + n, 'except'))  a.push({ type: 'except' });
-    else break;
+    if (tt[p + n].s != 'intersect' && tt[p + n].s != 'except') break;
+    a.push({ type: tt[p + n].s });
     n++;
     x = _req(_InstanceofExpr, tt, p + n);
     n += x[0];
@@ -118,7 +177,7 @@ function _CastableExpr(tt, p) { // [27]
   var x = _CastExpr(tt, p);
   if (!x) return;
   n += x[0];
-  if (_Kword(tt, p + n, 'castable') && _Kword(tt, p + n + 1, 'as')) {
+  if (tt[p + n].s == 'castable' && tt[p + n + 1].s == 'as') {
     n += 2;
     a.push(x[1]);
     x = _req(_SingleType, tt, p + n);
@@ -133,7 +192,7 @@ function _CastExpr(tt, p) { // [28]
   var x = _ArrowExpr(tt, p);
   if (!x) return;
   n += x[0];
-  if (_Kword(tt, p + n, 'cast') && _Kword(tt, p + n + 1, 'as')) {
+  if (tt[p + n].s == 'cast' && tt[p + n + 1].s == 'as') {
     n += 2;
     a.push(x[1]);
     x = _req(_SingleType, tt, p + n);
@@ -148,9 +207,9 @@ function _ArrowExpr(tt, p) { // [29]
   var x = _UnaryExpr(tt, p);
   if (!x) return;
   n += x[0];
-  if (tt[p + n].t != '=>') return x;
+  if (tt[p + n].s != '=>') return x;
   a.push(x[1]);
-  while (tt[p + n].t == '=>') {
+  while (tt[p + n].s == '=>') {
     n++;
     x = _EQName(tt, p + n) || _ValueExpr(tt, p + n) || _Parenthesized(tt, p + n);
     if (!x) unexpected(tt[p + n]);
@@ -165,8 +224,8 @@ function _ArrowExpr(tt, p) { // [29]
 function _UnaryExpr(tt, p) { // [30]
   var n = 0, m = false;
   while (true) {
-    if (tt[p + n].t == '-') m = !m;
-    else if (tt[p + n].t != '+') break;
+    if (tt[p + n].s == '-') m = !m;
+    else if (tt[p + n].s != '+') break;
     n++;
   }
   p += n;
@@ -292,7 +351,7 @@ function _ArgumentList(tt, p) { // [50]
     x = _req(_Argument, tt, p + n);
     n += x[0];
     a.push(x[1]);
-    if (tt[p + n].t == ')') return [n + 1, { type: 'ArgumentList', a: a }];
+    if (tt[p + n].s == ')') return [n + 1, { type: 'ArgumentList', a: a }];
     _expect(',', tt[p + n]);
     n++;
   }
@@ -359,10 +418,6 @@ function _EQName(tt, p) { // [112]
   else if (tt[p].t == 'name') {
     return [1, { type: 'EQName', a: [tt[p].v] }];
   }
-}
-function _Kword(tt, p, kw) {
-  var x = _EQName(tt, p);
-  if (x && x[1].a[0] == kw && !x[1].a[1] && !x[1].a[2]) return [x[0], { type: kw }];
 }
 
 function tokenize(s) {
