@@ -1,5 +1,6 @@
 const assert = require('assert');
 const parser = require('../parser');
+const XPath = require('..');
 
 describe('tokenize', function() {
   it('empty', function() {
@@ -102,206 +103,224 @@ describe('tokenize', function() {
 
 describe('parse', function() {
   it('empty', function() {
-    var x = parser.parse('');
+    var x = XPath.parse('');
     assert.equal(x.type, 'Empty');
-    x = parser.parse(' ');
+    x = XPath.parse(' ');
     assert.equal(x.type, 'Empty');
   });
   it('PrimaryExpr', function() {
-    var x = parser.parse('.');
+    var x = XPath.parse('.');
     assert.equal(x.type, '.');
-    x = parser.parse('1');
+    x = XPath.parse('1');
     assert.equal(x.type, 'Numeric');
-    x = parser.parse('"quoted"');
+    x = XPath.parse('"quoted"');
     assert.equal(x.type, 'String');
-    x = parser.parse('$var');
+    x = XPath.parse('$var');
     assert.equal(x.type, 'VarRef');
-    x = parser.parse('$ns:var');
+    x = XPath.parse('$ns:var');
     assert.equal(x.type, 'VarRef');
-    x = parser.parse('()');
+    x = XPath.parse('()');
     assert.equal(x.type, 'Empty');
-    x = parser.parse('(1)');
+    x = XPath.parse('(1)');
     assert.equal(x.type, 'Numeric');
-    x = parser.parse('(1,2)');
+    x = XPath.parse('(1,2)');
     assert.equal(x.type, 'Seq');
-    x = parser.parse('call()');
+    x = XPath.parse('call()');
     assert.equal(x.type, 'FunctionCall');
     assert.equal(x.a[1].type, 'ArgumentList');
     assert.equal(x.a[1].a.length, 0);
-    x = parser.parse('call(1)');
+    x = XPath.parse('call(1)');
     assert.equal(x.type, 'FunctionCall');
     assert.equal(x.a[1].type, 'ArgumentList');
     assert.equal(x.a[1].a.length, 1);
-    x = parser.parse('call(?, 1)');
+    x = XPath.parse('call(?, 1)');
     assert.equal(x.type, 'FunctionCall');
     assert.equal(x.a[1].type, 'ArgumentList');
     assert.equal(x.a[1].a.length, 2);
-    assert.throws(function() { parser.parse('call('); });
-    assert.throws(function() { parser.parse('call(1 2)'); });
+    assert.throws(function() { XPath.parse('call('); });
+    assert.throws(function() { XPath.parse('call(1 2)'); });
   });
   it('PostfixExpr', function() {
-    var x = parser.parse('$x[1]');
-    x = parser.parse('x()(?)');
-    assert.throws(function() { parser.parse('$x[]'); });
+    var x = XPath.parse('$x[1]');
+    x = XPath.parse('x()(?)');
+    assert.throws(function() { XPath.parse('$x[]'); });
     //console.log(x);
   });
   it('EQName', function() {
-    var x = parser.parse('x');
+    var x = XPath.parse('x');
     assert.equal(x.type, 'AxisStep');
     assert.equal(x.a[0].type, 'Axis');
     assert.equal(x.a[1].type, 'NameTest');
-    x = parser.parse('x:y');
+    x = XPath.parse('x:y');
     assert.equal(x.type, 'AxisStep');
     assert.equal(x.a[0].type, 'Axis');
     assert.equal(x.a[1].type, 'NameTest');
-    x = parser.parse('Q{x}y');
+    x = XPath.parse('Q{x}y');
     assert.equal(x.type, 'AxisStep');
     assert.equal(x.a[0].type, 'Axis');
     assert.equal(x.a[1].type, 'NameTest');
   });
   it('PathExpr', function() {
-    var x = parser.parse('/');
+    var x = XPath.parse('/');
     assert.equal(x.type, 'PathExpr');
     assert.equal(x.a.length, 1);
-    x = parser.parse('/a');
+    x = XPath.parse('/a');
     assert.equal(x.type, 'PathExpr');
     assert.equal(x.a.length, 2);
-    x = parser.parse('/a/b');
+    x = XPath.parse('/a/b');
     assert.equal(x.type, 'PathExpr');
     assert.equal(x.a.length, 4);
-    x = parser.parse('//a');
+    x = XPath.parse('//a');
     assert.equal(x.type, 'PathExpr');
     assert.equal(x.a.length, 2);
-    x = parser.parse('//a/b//c');
+    x = XPath.parse('//a/b//c');
     assert.equal(x.type, 'PathExpr');
     assert.equal(x.a.length, 6);
-    x = parser.parse('a/b');
+    x = XPath.parse('a/b');
     assert.equal(x.type, 'PathExpr');
     assert.equal(x.a.length, 3);
-    x = parser.parse('/node()[1]/../preceding::*[1]/*:x/x:*/Q{}*/@att');
+    x = XPath.parse('/node()[1]/../preceding::*[1]/*:x/x:*/Q{}*/@att');
     //console.log(x);
-    assert.throws(function() { parser.parse('//'); });
-    assert.throws(function() { parser.parse('/a/'); });
-    assert.throws(function() { parser.parse('/*:*'); });
+    assert.throws(function() { XPath.parse('//'); });
+    assert.throws(function() { XPath.parse('/a/'); });
+    assert.throws(function() { XPath.parse('/*:*'); });
   });
   it('Expr', function() {
-    var x = parser.parse('1, 2, 3');
+    var x = XPath.parse('1, 2, 3');
     assert.equal(x.type, 'Seq');
-    x = parser.parse('"a", "b"');
+    x = XPath.parse('"a", "b"');
     assert.equal(x.type, 'Seq');
-    assert.throws(function() { parser.parse('a,'); });
-    assert.throws(function() { parser.parse('a b'); });
+    assert.throws(function() { XPath.parse('a,'); });
+    assert.throws(function() { XPath.parse('a b'); });
   });
   it('SimpleMapExpr', function() {
-    var x = parser.parse('a!b');
+    var x = XPath.parse('a!b');
     assert.equal(x.type, 'SimpleMapExpr');
-    assert.throws(function() { parser.parse('a!'); });
+    assert.throws(function() { XPath.parse('a!'); });
   });
-  it('Unary-', function() {
-    var x = parser.parse('-+-+-1');
-    assert.equal(x.type, 'Unary-');
-    x = parser.parse('--1');
+  it('Unary', function() {
+    var x = XPath.parse('-+-+-1');
+    assert.equal(x.type, 'Unary');
+    x = XPath.parse('--1');
     assert.equal(x.type, 'Numeric');
-    assert.throws(function() { parser.parse('+'); });
+    assert.throws(function() { XPath.parse('+'); });
   });
   it('ArrowExpr', function() {
-    var x = parser.parse('a => b()');
+    var x = XPath.parse('a => b()');
     assert.equal(x.type, 'ArrowExpr');
-    assert.throws(function() { parser.parse('a=>'); });
-    assert.throws(function() { parser.parse('a=>b'); });
+    assert.throws(function() { XPath.parse('a=>'); });
+    assert.throws(function() { XPath.parse('a=>b'); });
   });
   it('CastExpr', function() {
-    var x = parser.parse('a cast as b');
+    var x = XPath.parse('a cast as b');
     assert.equal(x.type, 'CastExpr');
-    x = parser.parse('a cast as b?');
+    x = XPath.parse('a cast as b?');
     assert.equal(x.type, 'CastExpr');
-    assert.throws(function() { parser.parse('a cast as'); });
+    assert.throws(function() { XPath.parse('a cast as'); });
   });
   it('CastableExpr', function() {
-    var x = parser.parse('a castable as b');
+    var x = XPath.parse('a castable as b');
     assert.equal(x.type, 'CastableExpr');
-    assert.throws(function() { parser.parse('a castable as'); });
+    assert.throws(function() { XPath.parse('a castable as'); });
   });
   it('IntersectExceptExpr', function() {
-    var x = parser.parse('a intersect b except c');
+    var x = XPath.parse('a intersect b except c');
     assert.equal(x.type, 'IntersectExceptExpr');
-    assert.throws(function() { parser.parse('a intersect'); });
-    assert.throws(function() { parser.parse('a except'); });
+    assert.throws(function() { XPath.parse('a intersect'); });
+    assert.throws(function() { XPath.parse('a except'); });
   });
   it('UnionExpr', function() {
-    var x = parser.parse('a | b');
+    var x = XPath.parse('a | b');
     assert.equal(x.type, 'UnionExpr');
-    x = parser.parse('a union b');
+    x = XPath.parse('a union b');
     assert.equal(x.type, 'UnionExpr');
-    assert.throws(function() { parser.parse('a|'); });
-    assert.throws(function() { parser.parse('a union'); });
+    assert.throws(function() { XPath.parse('a|'); });
+    assert.throws(function() { XPath.parse('a union'); });
   });
   it('MultiplicativeExpr', function() {
-    var x = parser.parse('a * b');
+    var x = XPath.parse('a * b');
     assert.equal(x.type, 'MultiplicativeExpr');
-    x = parser.parse('a div b mod c');
+    x = XPath.parse('a div b mod c');
     assert.equal(x.type, 'MultiplicativeExpr');
-    assert.throws(function() { parser.parse('a*'); });
-    assert.throws(function() { parser.parse('a idiv'); });
+    assert.throws(function() { XPath.parse('a*'); });
+    assert.throws(function() { XPath.parse('a idiv'); });
   });
   it('AdditiveExpr', function() {
-    var x = parser.parse('a + b - c');
+    var x = XPath.parse('a + b - c');
     assert.equal(x.type, 'AdditiveExpr');
-    assert.throws(function() { parser.parse('a+'); });
-    assert.throws(function() { parser.parse('a -'); });
+    assert.throws(function() { XPath.parse('a+'); });
+    assert.throws(function() { XPath.parse('a -'); });
   });
   it('RangeExpr', function() {
-    var x = parser.parse('1 to 10');
+    var x = XPath.parse('1 to 10');
     assert.equal(x.type, 'RangeExpr');
-    assert.throws(function() { parser.parse('1 to'); });
+    assert.throws(function() { XPath.parse('1 to'); });
   });
   it('StringConcatExpr', function() {
-    var x = parser.parse('a || b||c');
+    var x = XPath.parse('a || b||c');
     assert.equal(x.type, 'StringConcatExpr');
-    assert.throws(function() { parser.parse('a||'); });
+    assert.throws(function() { XPath.parse('a||'); });
   });
   it('ComparisonExpr', function() {
-    var x = parser.parse('a = b');
+    var x = XPath.parse('a = b');
     assert.equal(x.type, 'ComparisonExpr');
-    x = parser.parse('a != b');
+    x = XPath.parse('a != b');
     assert.equal(x.type, 'ComparisonExpr');
-    x = parser.parse('a < b');
+    x = XPath.parse('a < b');
     assert.equal(x.type, 'ComparisonExpr');
-    x = parser.parse('a > b');
+    x = XPath.parse('a > b');
     assert.equal(x.type, 'ComparisonExpr');
-    x = parser.parse('a <= b');
+    x = XPath.parse('a <= b');
     assert.equal(x.type, 'ComparisonExpr');
-    x = parser.parse('a >= b');
+    x = XPath.parse('a >= b');
     assert.equal(x.type, 'ComparisonExpr');
-    x = parser.parse('a << b');
+    x = XPath.parse('a << b');
     assert.equal(x.type, 'ComparisonExpr');
-    x = parser.parse('a >> b');
+    x = XPath.parse('a >> b');
     assert.equal(x.type, 'ComparisonExpr');
-    x = parser.parse('a eq b');
+    x = XPath.parse('a eq b');
     assert.equal(x.type, 'ComparisonExpr');
-    x = parser.parse('a ne b');
+    x = XPath.parse('a ne b');
     assert.equal(x.type, 'ComparisonExpr');
-    x = parser.parse('a lt b');
+    x = XPath.parse('a lt b');
     assert.equal(x.type, 'ComparisonExpr');
-    x = parser.parse('a gt b');
+    x = XPath.parse('a gt b');
     assert.equal(x.type, 'ComparisonExpr');
-    x = parser.parse('a le b');
+    x = XPath.parse('a le b');
     assert.equal(x.type, 'ComparisonExpr');
-    x = parser.parse('a ge b');
+    x = XPath.parse('a ge b');
     assert.equal(x.type, 'ComparisonExpr');
-    x = parser.parse('a is b');
+    x = XPath.parse('a is b');
     assert.equal(x.type, 'ComparisonExpr');
-    assert.throws(function() { parser.parse('a!='); });
-    assert.throws(function() { parser.parse('a eq'); });
+    assert.throws(function() { XPath.parse('a!='); });
+    assert.throws(function() { XPath.parse('a eq'); });
   });
   it('AndExpr', function() {
-    var x = parser.parse('a and b and c');
+    var x = XPath.parse('a and b and c');
     assert.equal(x.type, 'AndExpr');
-    assert.throws(function() { parser.parse('a and'); });
+    assert.throws(function() { XPath.parse('a and'); });
   });
   it('OrExpr', function() {
-    var x = parser.parse('a or b or c');
+    var x = XPath.parse('a or b or c');
     assert.equal(x.type, 'OrExpr');
-    assert.throws(function() { parser.parse('a or'); });
+    assert.throws(function() { XPath.parse('a or'); });
+  });
+});
+
+describe('evaluate', function() {
+  it('unknown', function() {
+    var xp = new XPath('');
+    xp.T = { type: 'Unknown' };
+    assert.throws(function() { xp.evaluate(); });
+  });
+  it('empty', function() {
+    var x = XPath.evaluate('');
+    assert.equal(x.length, 0);
+  });
+  it('literal', function() {
+    assert.equal(XPath.evaluate('"string"')[0], 'string');
+    assert.equal(XPath.evaluate('20')[0], 20);
+    assert.equal(XPath.evaluate('0.2')[0], 0.2);
+    assert.equal(XPath.evaluate('1.e-5')[0], 1.e-5);
   });
 });

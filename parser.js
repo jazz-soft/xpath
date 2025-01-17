@@ -234,7 +234,7 @@ function _UnaryExpr(tt, p) { // [30]
     if (!n) return;
     unexpected(tt[p]);
   }
-  return [x[0] + n, m ? { type: 'Unary-', v: x[1] } : x[1]];
+  return [x[0] + n, m ? { type: 'Unary', v: x[1] } : x[1]];
 }
 function _ValueExpr(tt, p) { // [31, 35]
   var x = _PathExpr(tt, p);
