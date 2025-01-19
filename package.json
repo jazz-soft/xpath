@@ -12,6 +12,9 @@
     "coverage": "nyc report --reporter=lcov"
   },
   "author": "jazz-soft (https://jazz-soft.net/)",
+  "dependencies": {
+    "xx-err": "^0.0.1"
+  },
   "devDependencies": {
     "mocha": "^11.0.1",
     "nyc": "^17.1.0"

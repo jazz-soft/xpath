@@ -1,11 +1,13 @@
+const err = require('xx-err');
+
 function parse(s) {
   var tt = tokenize(s);
   var a = _Expr(tt, 0);
-  if (tt[a[0]].t != 'end') unexpected(tt[a[0]]);
+  if (tt[a[0]].t != 'end') _unexpected(tt[a[0]]);
   return a[1];
 }
-function _req(f, tt, p) { return f(tt, p) || unexpected(tt[p]); }
-function _expect(t, x) { if (x.t != t) unexpected(x); }
+function _req(f, tt, p) { return f(tt, p) || _unexpected(tt[p]); }
+function _expect(t, x) { if (x.t != t) _unexpected(x); }
 function _Expr(tt, p) { // [6]
   var a = [], n = 0, x;
   x = _ExprSingle(tt, p);
@@ -212,7 +214,7 @@ function _ArrowExpr(tt, p) { // [29]
   while (tt[p + n].s == '=>') {
     n++;
     x = _EQName(tt, p + n) || _ValueExpr(tt, p + n) || _Parenthesized(tt, p + n);
-    if (!x) unexpected(tt[p + n]);
+    if (!x) _unexpected(tt[p + n]);
     n += x[0];
     a.push(x[1]);
     x = _req(_ArgumentList, tt, p + n);
@@ -232,7 +234,7 @@ function _UnaryExpr(tt, p) { // [30]
   var x = _ValueExpr(tt, p);
   if (!x) {
     if (!n) return;
-    unexpected(tt[p]);
+    _unexpected(tt[p]);
   }
   return [x[0] + n, m ? { type: 'Unary', v: x[1] } : x[1]];
 }
@@ -311,16 +313,16 @@ function _NodeTest(tt, p) { // [46]
   if (tt[p].t == 'pref') {
     if (tt[p + 1].t == 'name') return [2, { type: 'NameTest', v: [tt[p + 1].v, tt[p].v] }];
     else if (tt[p + 1].t == '*') return [2, { type: 'NameTest', v: ['*', tt[p].v] }];
-    //unexpected(tt[p + 1]); // throws in tokenizer
+    //_unexpected(tt[p + 1]); // throws in tokenizer
   }
   if (tt[p].t == '*:') {
     if (tt[p + 1].t == 'name') return [2, { type: 'NameTest', v: [tt[p + 1].v, '*' ] }];
-    unexpected(tt[p + 1]);
+    _unexpected(tt[p + 1]);
   }
   else if (tt[p].t == 'Q{}') {
     if (tt[p + 1].t == 'name') return [2, { type: 'NameTest', v: [ tt[p + 1].v, undefined, tt[p].v] }];
     else if (tt[p + 1].t == '*') return [2, { type: 'NameTest', v: ['*', undefined, tt[p].v] }];
-    //unexpected(tt[p + 1]); // throws in tokenizer
+    //_unexpected(tt[p + 1]); // throws in tokenizer
   }
   else if (tt[p].t == '*') return [1, { type: 'NameTest', v: ['*'] }];
   else if (tt[p].t == 'name') {
@@ -360,7 +362,7 @@ function _Predicate(tt, p) { // [51]
   if (tt[p].t != '[') return;
   p++;
   var x = _req(_Expr, tt, p);
-  if (!x[0]) unexpected(tt[p]);
+  if (!x[0]) _unexpected(tt[p]);
   p += x[0];
   _expect(']', tt[p]);
   return [x[0] + 2, { type: 'Predicate', a: x[1] }];
@@ -456,12 +458,12 @@ function tokenize(s) {
           }
         }
         x = get_name(s, p);
-        if (!x) err('Missing name', p);
-        if (x.s == '*' && c == '$') unexpected(x);
+        if (!x) _err('Missing name', p);
+        if (x.s == '*' && c == '$') _unexpected(x);
         tt.push(x);
         p += x.s.length;
         if (k == 0 && s[p] == ':' && s[p + 1] == ':') {
-          if (!axes[x.v]) err('Unknown axis', p - x.v.length);
+          if (!axes[x.v]) _err('Unknown axis', p - x.v.length);
           x.t = 'axis';
           x.s += '::';
           p += 2;
@@ -503,7 +505,7 @@ function get_quoted(s, p) {
     }
     v += c;
   }
-  err('Unmatched quote', p);
+  _err('Unmatched quote', p);
 }
 function get_number(s, p) {
   var f = false;
@@ -518,7 +520,7 @@ function get_number(s, p) {
   if (s[n] == 'e' || s[n] == 'E') {
     n++;
     if (s[n] == '+' || s[n] == '-') n++;
-    if (!isDigit(s[n])) err('Syntax error', p);
+    if (!isDigit(s[n])) _err('Syntax error', p);
     while (isDigit(s[n])) n++;
   }
   s = s.substring(p, n);
@@ -527,7 +529,7 @@ function get_number(s, p) {
 function get_quri(s, p) {
   if (s[p] != 'Q' || s[p + 1] != '{') return;
   for (var n = p + 2; n < s.length; n++) if (s[n] == '}') return { t: 'Q{}', p: p, s: s.substring(p, n + 1), v: s.substring(p + 2, n).trim() };
-  err('Unmatched brace', p + 1);
+  _err('Unmatched brace', p + 1);
 }
 function get_comment(s, p) {
   if (s[p] != '(' || s[p + 1] != ':') return;
@@ -539,7 +541,7 @@ function get_comment(s, p) {
       if (!k) return { t: '(:', p: p, s: s.substring(p, n + 1) };
     }
   }
-  err('Incomplete comment', p);
+  _err('Incomplete comment', p);
 }
 function get_name(s, p) {
   if (s[p] == '*') return { t: '*', p: p, s: '*' };
@@ -558,8 +560,8 @@ function isNameStart(c) { // https://www.w3.org/TR/REC-xml/#NT-Name
 function isNameChar(c) { // https://www.w3.org/TR/REC-xml/#NT-Name
   return isNameStart(c) || c == 45 || c == 46 || c >= 48 && c <= 57 || c == 0xb7 || c >= 0x300 && c <= 0x36F || c >= 0x203F && c <= 0x2040;
 }
-function unexpected(t) { err(t.t == 'end' ? 'Unexpected end of input' : 'Unexpected token: ' + t.s, t.p); }
-function err(msg, p) { throw new Error(msg + ' at position ' + p); }
+function _unexpected(t) { _err(t.t == 'end' ? 'Unexpected end of input' : 'Unexpected token: ' + t.s, t.p); }
+function _err(msg, p) { err.XPST0003(msg, { pos: p }); }
 const ops = {};
 for (var k of ['//', '..', '||', '<<', '>>', '<=', '>=', '!=', '=>']) ops[k] = true;
 const axes = {
